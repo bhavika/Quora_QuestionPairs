@@ -23,16 +23,25 @@ features = featureset1 + featureset2
 
 print (features)
 
-X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.33)
+X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)
+
+X_train = X_train.astype(float)
+X_test = X_test.astype(float)
+y_train = y_train.astype(float)
+
+y_train = y_train.values
+y_test = y_test.astype(float)
 
 accuracy = make_scorer(log_loss)
 
-xgtrain_X = xgb.DMatrix(X_train, label= y_train)
+xgtrain_X = xgb.DMatrix(X_train, label=y_train)
 xgtest_X = xgb.DMatrix(X_test, label=y_test)
 
-d_test = xgb.DMatrix(test)
+d_test = test[features]
 
-evallist  = [(xgtest_X,'eval'), (xgtrain_X,'train')]
+d_test = xgb.DMatrix(d_test)
+
+watchlist = [(xgtrain_X, 'train'), (xgtest_X,'test')]
 
 params = {}
 params['objective'] = 'binary:logistic'
@@ -40,7 +49,16 @@ params['eval_metric'] = 'logloss'
 params['eta'] = 0.02
 params['max_depth'] = 4
 
-baseline_xgb = xgb.train(params, xgtrain_X, watchlist=evallist, early_stopping_rounds=50, verbose_eval=10)
+
+def logregobj(preds, dtrain):
+    labels = dtrain.get_label()
+    preds = 1.0 / (1.0 + np.exp(-preds))
+    grad = preds - labels
+    hess = preds * (1.0-preds)
+    return grad, hess
+
+
+baseline_xgb = xgb.train(params, xgtrain_X, evals=watchlist, verbose_eval=10)
 y_pred = baseline_xgb.predict(d_test)
 
 sub = pd.DataFrame()
