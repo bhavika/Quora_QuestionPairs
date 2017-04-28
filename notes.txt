@@ -3,3 +3,24 @@ Concepts:
 tSNE
 gLoVe
 
+
+scikit-learn:
+
+1) Feature Unions and Pipelines
+2) Estimator chaining
+3) GridSearch 
+
+
+Feature engineering ideas:
+
+1) Normalization and Scaling (Z-Score?) of numeric values
+2) TF-IDF
+3) SVD
+4) Word2Vec features - skew, kurtosis, various distance measures
+
+
+Code improvements:
+
+1) Time training steps for each model
+2) Parallelize - dask? Spark?
+3) Pickle train, test dataframes after feature engineering
