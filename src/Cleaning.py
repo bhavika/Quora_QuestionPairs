@@ -1,7 +1,4 @@
-
 # coding: utf-8
-
-# In[2]:
 
 import pandas as pd
 import numpy as np
@@ -11,6 +8,7 @@ from string import punctuation
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 import difflib
+
 
 def load_data(path):
     train = pd.read_csv(path+'/train.csv')
@@ -32,8 +30,7 @@ def fill_missing_values(train, test):
 
     
 def clean_text(text, remove_stopwords=True, stemming=False):
-    
-    
+
      # Clean the text
     text = re.sub(r"[^A-Za-z0-9]", " ", text)
     text = re.sub(r"what's", "", text)
@@ -125,8 +122,6 @@ stop_words = ['the','a','an','and','but','if','or','because','as','what','which'
               'Is','If','While','This']
 
 
-# In[4]:
-
 def process_questions(question_list, questions, question_list_name, dataframe):
     '''transform questions and display progress'''
     for idx, question in enumerate(questions):
@@ -136,28 +131,17 @@ def process_questions(question_list, questions, question_list_name, dataframe):
             print("{} is {}% complete.".format(question_list_name, round(progress, 1)))            
 
 
-# In[5]:
-
 train_question2 = []
 process_questions(train_question2, train.question2, 'train_question2', train)
 
-
-# In[6]:
-
 train_question1 = []
 process_questions(train_question1, train.question1, 'train_question1', train)
-
-
-# In[7]:
 
 test_question1 = []
 process_questions(test_question1, test.question1, 'test_question1', test)
 
 test_question2 = []
 process_questions(test_question2, test.question2, 'test_question2', test)
-
-
-# In[8]:
 
 # append these clean questions back to the original dataframes
 
@@ -169,11 +153,6 @@ test_q2_clean = pd.Series(test_question2)
 train = pd.concat([train, train_q1_clean, train_q2_clean],  axis = 1)
 test = pd.concat([test, test_q1_clean, test_q2_clean], axis = 1)
 
-get_ipython().magic(u'store train')
-get_ipython().magic(u'store test')
-
-
-# In[9]:
 
 # Start feature engineering
 
