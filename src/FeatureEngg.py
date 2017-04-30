@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_pandas
 from fuzzywuzzy import fuzz
 import cPickle
 import pandas as pd
@@ -9,6 +9,9 @@ import gensim
 import numpy as np
 from nltk.corpus import stopwords
 from nltk import word_tokenize
+import pyemd
+import time
+
 
 stop_words = stopwords.words('english')
 
@@ -111,8 +114,9 @@ def calc_question_vectors(data):
 
 def calculate_featureset3(dataframe):
     # Word Mover's Distance
-    dataframe['wmd'] = dataframe.apply(lambda x: calc_wordmoversdist(x['question1'], x['question2']), axis =1)
-    dataframe['norm_wmd'] = dataframe.apply(lambda x: calc_norm_wordmover(x['question1'], x['question2']), axis =1)
+    tqdm_pandas(tqdm())
+    dataframe['wmd'] = dataframe.progress_apply(lambda x: calc_wordmoversdist(x['question1'], x['question2']), axis =1)
+    dataframe['norm_wmd'] = dataframe.progress_apply(lambda x: calc_norm_wordmover(x['question1'], x['question2']), axis =1)
     return dataframe
 
 train = calculate_featureset3(train)
