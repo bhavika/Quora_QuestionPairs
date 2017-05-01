@@ -12,6 +12,7 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 from XGB_Baseline import xgtrain_X, xgtest_X, X_train, y_train
 from sklearn.metrics import log_loss
+import subprocess
 sys.path.append('xgboost/wrapper/')
 
 
@@ -65,7 +66,7 @@ def main():
         'eta': [0.05, 0.1, 0.3],
         'max_depth': [6, 9, 12],
         'subsample': [0.9, 1.0],
-        'colsample_bytree': [0.9, 1.0],
+        'colsample_bytree': [1.0],
     }
     clf = GridSearchCV(clf, parameters, n_jobs=1, cv=2)
 
@@ -75,6 +76,9 @@ def main():
     for param_name in sorted(best_parameters.keys()):
         print("%s: %r" % (param_name, best_parameters[param_name]))
     print('predicted:', clf.predict([[1, 1]]))
+
+    subprocess.call(['speech-dispatcher'])  # start speech dispatcher
+    subprocess.call(['spd-say', '"your process has finished"'])
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'cha
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 
 features = featureset1 + featureset2
-
+# features = ['wordshare']
 print (features)
 
 X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)
@@ -38,29 +38,29 @@ d_test = xgb.DMatrix(d_test)
 
 watchlist = [(xgtrain_X, 'train'), (xgtest_X,'test')]
 
-params = {}
-params['objective'] = 'binary:logistic'
-params['eval_metric'] = 'logloss'
-params['eta'] = 0.02
-params['max_depth'] = 4
-
+# params = {}
+# params['objective'] = 'binary:logistic'
+# params['eval_metric'] = 'logloss'
+# params['eta'] = 0.02
+# params['max_depth'] = 8
+#
 # baseline_xgb = xgb.train(params, xgtrain_X, evals=watchlist,  num_boost_round=400, verbose_eval=10)
 # y_pred = baseline_xgb.predict(d_test)
-#
+
 # sns.set(font_scale = 1.5)
 # xgb.plot_importance(baseline_xgb)
 # plt.show()
-#
+
 # sub = pd.DataFrame()
 # sub['test_id'] = test['test_id']
 # sub['is_duplicate'] = y_pred
-# sub.to_csv('../sub/xgb_baseline1.csv', index=False)
+# sub.to_csv('../sub/xgb_baseline4.csv', index=False)
 
-
-subprocess.call(['speech-dispatcher'])        #start speech dispatcher
-subprocess.call(['spd-say', '"your process has finished"'])
-
-
+#
+# subprocess.call(['speech-dispatcher'])        #start speech dispatcher
+# subprocess.call(['spd-say', '"your process has finished"'])
+#
+#
 
 
 

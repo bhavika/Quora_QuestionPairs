@@ -10,17 +10,17 @@ import numpy as np
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 import pyemd
-import time
-
+from time import time
+from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
 
 stop_words = stopwords.words('english')
 
 train = pd.read_pickle('../data/train.pkl')
 test = pd.read_pickle('../data/test.pkl')
 
-wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
-norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
-norm_model.init_sims(replace=True)
+# wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+# norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+# norm_model.init_sims(replace=True)
 
 
 # Calculate fuzzy features
@@ -119,18 +119,40 @@ def calculate_featureset3(dataframe):
     dataframe['norm_wmd'] = dataframe.progress_apply(lambda x: calc_norm_wordmover(x['question1'], x['question2']), axis =1)
     return dataframe
 
-train = calculate_featureset3(train)
-test = calculate_featureset3(test)
-
-q1_vector, q2_vector = calc_question_vectors(train)
-
-cPickle.dump(q1_vector, open('../data/q1_w2v.pkl', 'wb'), -1)
-cPickle.dump(q2_vector, open('../data/q2_w2v.pkl', 'wb'), -1)
-
-train.to_pickle('../data/train.pkl')
-test.to_pickle('../data/test.pkl')
 
 
+def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
+    dataframe['cosine_dist'] = [cosine(x, y) for (x, y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['cityblock_dist'] = [cityblock(x,y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['jaccard_dist'] = [jaccard(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['canberra_dist'] =[canberra(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['euclidean_dist'] = [euclidean(x, y ) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['minkowski_dist'] = [minkowski(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['braycurtis_dist'] = [braycurtis(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['skew_q1'] = [skew(v) for x in np.nan_to_num(q1_vectors)]
+    dataframe['skew_q2'] = [skew(v) for x in np.nan_to_num(q2_vectors)]
+    dataframe['kurtosis_q1'] = [kurtosis(v) for x in np.nan_to_num(q1_vectors)]
+    dataframe['kurtosis_q2'] = [kurtosis(v) for x in np.nan_to_num(q2_vectors)]
 
+# train = calculate_featureset3(train)
+# test = calculate_featureset3(test)
+#
+# q1_vector, q2_vector = calc_question_vectors(train)
+start = time()
+# q1_vector, q2_vector = calc_question_vectors(test)
+# cPickle.dump(q1_vector, open('../data/q1_w2v_test.pkl', 'wb'), -1)
+# cPickle.dump(q2_vector, open('../data/q2_w2v_test.pkl', 'wb'), -1)
+
+# train.to_pickle('../data/train.pkl')
+# test.to_pickle('../data/test.pkl')
+
+
+train_q1vecs = cPickle.load(open('../data/q1_w2v.pkl', 'rb'))
+train_q2vecs = cPickle.load(open('../data/q2_w2v.pkl', 'rb'))
+
+calculate_featureset4(train, train_q1vecs, train_q2vecs)
+
+
+print "Elapsed time: ", time() - start
 
 
