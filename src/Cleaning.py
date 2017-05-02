@@ -115,8 +115,6 @@ print(train.isnull().sum())
 print(test.isnull().sum())
 
 
-# In[3]:
-
 stop_words = ['the','a','an','and','but','if','or','because','as','what','which','this','that','these','those','then',
               'just','so','than','such','both','through','about','for','is','of','while','during','to','What','Which',
               'Is','If','While','This']
@@ -172,8 +170,11 @@ def calculate_wordshare(row):
     wordshare = 1.0 * (len(common_words_q1) + len(common_words_q2))/(len(q1_words) + len(q2_words))
     return wordshare
 
+
 def create_featureset1(dataframe):
-    '''
+
+
+    """
     Input: DataFrame
     Description:
     'c' at the end of the feature name indicates 'clean' which is the computed questions 
@@ -189,7 +190,7 @@ def create_featureset1(dataframe):
     7) Characters in q1 after cleaning and excluding spaces - chars_q1c
     8) Characters in q2 after cleaning and excluding spaces - chars_q2c
     9) Average number of words shared between q1 and q2 - wordshare
-    '''
+    """
 
     dataframe['len_q1'] = dataframe.question1.map(lambda x: len(str(x)))
     dataframe['len_q2'] = dataframe.question2.map(lambda x: len(str(x)))
@@ -210,7 +211,6 @@ def create_featureset1(dataframe):
 
 train = create_featureset1(train)
 test = create_featureset1(test)
-
 
 train.to_pickle('../data/train.pkl')
 test.to_pickle('../data/test.pkl')
