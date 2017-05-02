@@ -1,74 +1,43 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Check this gist for xgboost wrapper: https://gist.github.com/slaypni/b95cb69fd1c82ca4c2ff
-# Author: Kazuaki Tanida
-# Source: https://www.kaggle.com/tanitter/introducing-kaggle-scripts/grid-search-xgboost-with-scikit-learn
-
 import sys
-import math
-import xgboost as xgb
-import numpy as np
-from sklearn.model_selection import GridSearchCV
-from XGB_Baseline import xgtrain_X, xgtest_X, X_train, y_train
+import xgboost
+import pandas as pd
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import log_loss
 import subprocess
+
 sys.path.append('xgboost/wrapper/')
 
+train = pd.read_pickle('../data/train.pkl')
+test = pd.read_pickle('../data/test.pkl')
 
-class XGBoostClassifier():
-    def __init__(self, num_boost_round=10, **params):
-        self.clf = None
-        self.num_boost_round = num_boost_round
-        self.params = params
-        self.params.update({'objective': 'binary:logistic'})
+featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'chars_q2c', 'wordshare']
+featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 
-    def fit(self, X, y, num_boost_round=None):
-        num_boost_round = num_boost_round or self.num_boost_round
-        self.label2num = {label: i for i, label in enumerate(sorted(set(y)))}
-        dtrain = xgb.DMatrix(X, label=[self.label2num[label] for label in y])
-        self.clf = xgb.train(params=self.params, dtrain=dtrain, num_boost_round=num_boost_round)
+features = featureset1 + featureset2
+# features = ['wordshare']
+print (features)
 
-    def predict(self, X):
-        num2label = {i: label for label, i in self.label2num.items()}
-        Y = self.predict_proba(X)
-        y = np.argmax(Y, axis=1)
-        return np.array([num2label[i] for i in y])
-
-    def predict_proba(self, X):
-        dtest = xgb.DMatrix(X)
-        return self.clf.predict(dtest)
-
-    def score(self, X, y):
-        Y = self.predict_proba(X)
-        return 1 / log_loss(y, Y)
-
-    def get_params(self, deep=True):
-        return self.params
-
-    def set_params(self, **params):
-        if 'num_boost_round' in params:
-            self.num_boost_round = params.pop('num_boost_round')
-        if 'objective' in params:
-            del params['objective']
-        self.params.update(params)
-        return self
+X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)
 
 
-def main():
-    clf = XGBoostClassifier(
-        eval_metric='logloss',
+def gridsearch():
+    clf = xgboost.XGBRegressor(
+        objective='binary:logistic',
         nthread=4,
-        silent=1,
+        silent=False,
     )
     parameters = {
-        'num_boost_round': [100, 250, 500],
-        'eta': [0.05, 0.1, 0.3],
-        'max_depth': [6, 9, 12],
+        'n_estimators': [50, 100, 250, 500],
+        'learning_rate': [0.05, 0.1, 0.3],
+        'max_depth': [4, 6, 9, 12, 24],
         'subsample': [0.9, 1.0],
-        'colsample_bytree': [1.0],
+        'colsample_bylevel': [1.0],
     }
-    clf = GridSearchCV(clf, parameters, n_jobs=1, cv=2)
+
+    clf = GridSearchCV(clf, parameters, n_jobs=1, cv=4)
 
     clf.fit(X_train, y_train)
     best_parameters, score, _ = max(clf.cv_results_, key=lambda x: x[1])
@@ -82,4 +51,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    gridsearch()

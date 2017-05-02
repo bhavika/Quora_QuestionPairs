@@ -3,7 +3,7 @@
 
 from tqdm import tqdm, tqdm_pandas
 from fuzzywuzzy import fuzz
-import cPickle
+from sklearn.externals import joblib
 import pandas as pd
 import gensim
 import numpy as np
@@ -134,24 +134,18 @@ def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
     dataframe['kurtosis_q1'] = [kurtosis(v) for x in np.nan_to_num(q1_vectors)]
     dataframe['kurtosis_q2'] = [kurtosis(v) for x in np.nan_to_num(q2_vectors)]
 
-# train = calculate_featureset3(train)
-# test = calculate_featureset3(test)
-#
-# q1_vector, q2_vector = calc_question_vectors(train)
 start = time()
-# q1_vector, q2_vector = calc_question_vectors(test)
-# cPickle.dump(q1_vector, open('../data/q1_w2v_test.pkl', 'wb'), -1)
-# cPickle.dump(q2_vector, open('../data/q2_w2v_test.pkl', 'wb'), -1)
 
-# train.to_pickle('../data/train.pkl')
-# test.to_pickle('../data/test.pkl')
-
-
-train_q1vecs = cPickle.load(open('../data/q1_w2v.pkl', 'rb'))
-train_q2vecs = cPickle.load(open('../data/q2_w2v.pkl', 'rb'))
+train_q1vecs = joblib.load('../data/q1_w2v.pkl')
+train_q2vecs = joblib.load('../data/q2_w2v.pkl')
+test_q1vecs = joblib.load('../data/q1_w2v_test.pkl')
+test_q2vecs = joblib.load('../data/q2_w2v_test.pkl')
 
 calculate_featureset4(train, train_q1vecs, train_q2vecs)
+calculate_featureset4(test, test_q1vecs, test_q2vecs)
 
+train.to_pickle('../data/train.pkl')
+test.to_pickle('../data/test.pkl')
 
 print "Elapsed time: ", time() - start
 
