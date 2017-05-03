@@ -7,6 +7,7 @@ from sklearn.externals import joblib
 import pandas as pd
 import gensim
 import numpy as np
+from scipy.stats import skew, kurtosis
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 import pyemd
@@ -120,32 +121,33 @@ def calculate_featureset3(dataframe):
     return dataframe
 
 
-
 def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
     dataframe['cosine_dist'] = [cosine(x, y) for (x, y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
     dataframe['cityblock_dist'] = [cityblock(x,y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
     dataframe['jaccard_dist'] = [jaccard(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
     dataframe['canberra_dist'] =[canberra(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
     dataframe['euclidean_dist'] = [euclidean(x, y ) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
-    dataframe['minkowski_dist'] = [minkowski(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['minkowski_dist'] = [minkowski(x, y, 3) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
     dataframe['braycurtis_dist'] = [braycurtis(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
-    dataframe['skew_q1'] = [skew(v) for x in np.nan_to_num(q1_vectors)]
-    dataframe['skew_q2'] = [skew(v) for x in np.nan_to_num(q2_vectors)]
-    dataframe['kurtosis_q1'] = [kurtosis(v) for x in np.nan_to_num(q1_vectors)]
-    dataframe['kurtosis_q2'] = [kurtosis(v) for x in np.nan_to_num(q2_vectors)]
+    dataframe['skew_q1'] = [skew(x) for x in np.nan_to_num(q1_vectors)]
+    dataframe['skew_q2'] = [skew(x) for x in np.nan_to_num(q2_vectors)]
+    dataframe['kurtosis_q1'] = [kurtosis(x) for x in np.nan_to_num(q1_vectors)]
+    dataframe['kurtosis_q2'] = [kurtosis(x) for x in np.nan_to_num(q2_vectors)]
 
 start = time()
 
-train_q1vecs = joblib.load('../data/q1_w2v.pkl')
-train_q2vecs = joblib.load('../data/q2_w2v.pkl')
-test_q1vecs = joblib.load('../data/q1_w2v_test.pkl')
-test_q2vecs = joblib.load('../data/q2_w2v_test.pkl')
+# train_q1vecs = joblib.load('../data/q1_w2v.pkl')
+# train_q2vecs = joblib.load('../data/q2_w2v.pkl')
 
-calculate_featureset4(train, train_q1vecs, train_q2vecs)
-calculate_featureset4(test, test_q1vecs, test_q2vecs)
+# test_q1vecs = joblib.load('../data/q1_w2v_test.pkl')
+# test_q2vecs = joblib.load('../data/q2_w2v_test.pkl')
 
-train.to_pickle('../data/train.pkl')
-test.to_pickle('../data/test.pkl')
+#calculate_featureset4(train, train_q1vecs, train_q2vecs)
+#calculate_featureset4(test, test_q1vecs, test_q2vecs)
+
+#train.to_pickle('../data/train.pkl')
+#test.to_pickle('../data/test.pkl')
+# print train.columns.values
 
 print "Elapsed time: ", time() - start
 

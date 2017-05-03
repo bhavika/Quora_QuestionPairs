@@ -16,9 +16,10 @@ test = pd.read_pickle('../data/test.pkl')
 
 featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'chars_q2c', 'wordshare']
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
+featureset3 = [ 'norm_wmd', 'wmd']
 
-features = featureset1 + featureset2
-# features = ['wordshare']
+#features = featureset1 + featureset2 + featureset3
+features = ['wordshare'] + featureset3
 print (features)
 
 X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)
@@ -43,24 +44,26 @@ watchlist = [(xgtrain_X, 'train'), (xgtest_X,'test')]
 # params['eval_metric'] = 'logloss'
 # params['eta'] = 0.02
 # params['max_depth'] = 8
-#
-# baseline_xgb = xgb.train(params, xgtrain_X, evals=watchlist,  num_boost_round=400, verbose_eval=10)
-# y_pred = baseline_xgb.predict(d_test)
 
-# sns.set(font_scale = 1.5)
-# xgb.plot_importance(baseline_xgb)
-# plt.show()
+params = {'n_estimators': 500, 'subsample': 0.9, 'learning_rate': 0.05, 'max_depth': 9, 'colsample_bylevel': 1.0,
+          'objective': 'binary:logistic', 'eval_metric': 'logloss'}
 
-# sub = pd.DataFrame()
-# sub['test_id'] = test['test_id']
-# sub['is_duplicate'] = y_pred
-# sub.to_csv('../sub/xgb_baseline4.csv', index=False)
+baseline_xgb = xgb.train(params, xgtrain_X, evals=watchlist,  num_boost_round=400, verbose_eval=10)
+y_pred = baseline_xgb.predict(d_test)
 
-#
-# subprocess.call(['speech-dispatcher'])        #start speech dispatcher
-# subprocess.call(['spd-say', '"your process has finished"'])
-#
-#
+sns.set(font_scale = 1.5)
+xgb.plot_importance(baseline_xgb)
+plt.show()
+
+sub = pd.DataFrame()
+sub['test_id'] = test['test_id']
+sub['is_duplicate'] = y_pred
+sub.to_csv('../sub/xgb_baseline6.csv', index=False)
+
+
+subprocess.call(['speech-dispatcher'])        #start speech dispatcher
+subprocess.call(['spd-say', '"your process has finished"'])
+
 
 
 

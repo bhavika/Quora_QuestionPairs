@@ -34,16 +34,18 @@ def gridsearch():
         'learning_rate': [0.05, 0.1, 0.3],
         'max_depth': [4, 6, 9, 12, 24],
         'subsample': [0.9, 1.0],
-        'colsample_bylevel': [1.0],
+        'colsample_bylevel': [1.0]
     }
 
     clf = GridSearchCV(clf, parameters, n_jobs=1, cv=4)
 
     clf.fit(X_train, y_train)
-    best_parameters, score, _ = max(clf.cv_results_, key=lambda x: x[1])
-    print('score:', score)
-    for param_name in sorted(best_parameters.keys()):
-        print("%s: %r" % (param_name, best_parameters[param_name]))
+
+    print "Best parameters", clf.best_params_
+
+    # print "CV results"
+    # print clf.cv_results_
+
     print('predicted:', clf.predict([[1, 1]]))
 
     subprocess.call(['speech-dispatcher'])  # start speech dispatcher
