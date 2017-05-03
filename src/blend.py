@@ -59,9 +59,9 @@ def blend(X, y, test):
             X_test = X[te]
             y_test = y[te]
             clf.fit(X_train, y_train)
-            y_predict = clf.predict(X_test)[:, 1]
+            y_predict = clf.predict(X_test)
             dataset_blend_train[te, j] = y_predict
-            dataset_blend_test_j[:, i] = clf.predict(test)[:, 1]
+            dataset_blend_test_j[:, i] = clf.predict(test)
         dataset_blend_test[:, j] = dataset_blend_test_j.mean(1)
 
     print
@@ -74,16 +74,16 @@ def blend(X, y, test):
     print "Linear stretch of predictions to [0, 1]"
     y_submission = (y_predict - y_predict.min())/(y_predict.max() - y_predict.min())
 
-    tmp = np.vstack([range(1, len(y_submission)+1), y_submission]).T
+    # tmp = np.vstack([range(1, len(y_submission)), y_submission]).T
 
     print "Saving "
 
-    sub = pd.DataFrame()
-    sub['test_id'] = private['test_id']
-    sub['is_duplicate'] = tmp
-    sub.to_csv('../sub/blended1.csv', index=False)
+    # sub = pd.DataFrame()
+    # sub['test_id'] = private['test_id']
+    # sub['is_duplicate'] = y_submission
+    # sub.to_csv('../sub/blended1.csv', index=False)
 
-    np.savetxt('blended1.txt', X=tmp, fmt="%0.9f")
+    np.savetxt(fname='blended1.txt', X=y_submission, fmt="%d,%0.9f", header='test_id,is_duplicate',comments='')
 
 y_train = np.array(train['is_duplicate'])
 X_train = np.array(train[features])
