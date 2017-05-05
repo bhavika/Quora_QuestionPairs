@@ -1,0 +1,13 @@
+pandas
+numpy
+scipy
+tqdm
+pyemd
+keras
+tensorflow
+matplotlib
+seaborn
+nltk
+difflib
+fuzzywuzzy
+sklearn
