@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats import skew, kurtosis
 from nltk.corpus import stopwords
 from nltk import word_tokenize
-import pyemd
+# import pyemd
 from time import time
 from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
 
@@ -72,24 +72,24 @@ def calculate_featureset2(dataframe):
     return dataframe
 
 
-def calc_wordmoversdist(s1, s2):
-    s1 = str(s1).lower().split()
-    s2 = str(s2).lower().split()
-    s1 = [w for w in s1 if w not in stop_words]
-    s2 = [w for w in s2 if w not in stop_words]
-    return wv_model.wmdistance(s1, s2)
-
-
-def calc_norm_wordmover(s1, s2):
-    s1 = str(s1).lower().split()
-    s2 = str(s2).lower().split()
-    s1 = [w for w in s1 if w not in stop_words]
-    s2 = [w for w in s2 if w not in stop_words]
-    return norm_model.wmdistance(s1, s2)
+# def calc_wordmoversdist(s1, s2):
+#     s1 = str(s1).lower().split()
+#     s2 = str(s2).lower().split()
+#     s1 = [w for w in s1 if w not in stop_words]
+#     s2 = [w for w in s2 if w not in stop_words]
+#     return wv_model.wmdistance(s1, s2)
+#
+#
+# def calc_norm_wordmover(s1, s2):
+#     s1 = str(s1).lower().split()
+#     s2 = str(s2).lower().split()
+#     s1 = [w for w in s1 if w not in stop_words]
+#     s2 = [w for w in s2 if w not in stop_words]
+#     return norm_model.wmdistance(s1, s2)
 
 
 def sent2vec(s):
-    words = str(s).lower().decode('utf-8')
+    words = str(s).lower()
     words = word_tokenize(words)
     words = [w for w in words if not w in stop_words]
     M = []
@@ -136,8 +136,15 @@ def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
 
 start = time()
 
+# tr_q1, tr_q2 = calc_question_vectors(train)
+# joblib.dump(tr_q1, '../data/q1_w2v_py2.pkl')
+# joblib.dump(tr_q2, '../data/q2_w2v_py2.pkl')
+
 # train_q1vecs = joblib.load('../data/q1_w2v.pkl')
 # train_q2vecs = joblib.load('../data/q2_w2v.pkl')
+# te_q1, te_q2 = calc_question_vectors(test)
+# joblib.dump(te_q1, '../data/q1_w2v_test_py2.pkl')
+# joblib.dump(te_q2, '../data/q2_w2v_test_py2.pkl')
 
 # test_q1vecs = joblib.load('../data/q1_w2v_test.pkl')
 # test_q2vecs = joblib.load('../data/q2_w2v_test.pkl')
@@ -145,10 +152,15 @@ start = time()
 #calculate_featureset4(train, train_q1vecs, train_q2vecs)
 #calculate_featureset4(test, test_q1vecs, test_q2vecs)
 
+
+
+
+
+
 #train.to_pickle('../data/train.pkl')
 #test.to_pickle('../data/test.pkl')
 # print train.columns.values
 
-print "Elapsed time: ", time() - start
+print ("Elapsed time: ", time() - start)
 
 

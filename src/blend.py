@@ -14,7 +14,7 @@ featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'cha
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 featureset3 = [ 'norm_wmd', 'wmd']
 
-features = featureset3 + ['qratio', 'wordshare']
+features = featureset3 + ['wordshare']
 
 
 def blend(X, y, test):
@@ -31,10 +31,10 @@ def blend(X, y, test):
 
     print skf_splits
 
-    clfs = [RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse', max_features='sqrt'),
-            RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse', max_features='sqrt'),
-            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse', max_features='sqrt'),
-            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse', max_features='sqrt'),
+    clfs = [RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
             GradientBoostingRegressor(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=50)]
 
     print "Creating train and test sets for blending"
@@ -83,7 +83,7 @@ def blend(X, y, test):
     # sub['is_duplicate'] = y_submission
     # sub.to_csv('../sub/blended1.csv', index=False)
 
-    np.savetxt(fname='blended2.txt', X=y_submission, fmt="%d,%0.9f", header='test_id,is_duplicate',comments='')
+    np.savetxt(fname='blended3.txt', X=y_submission, fmt="%d,%0.9f", header='test_id,is_duplicate',comments='')
 
 y_train = np.array(train['is_duplicate'])
 X_train = np.array(train[features])
