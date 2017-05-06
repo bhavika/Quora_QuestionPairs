@@ -41,7 +41,7 @@ def gridsearch():
 
     clf.fit(X_train, y_train)
 
-    print "Best parameters", clf.best_params_
+    print ("Best parameters", clf.best_params_)
 
     # print "CV results"
     # print clf.cv_results_

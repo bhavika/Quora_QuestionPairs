@@ -68,11 +68,11 @@ data_2 = pad_sequences(sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
 labels = np.array(labels)
 
 # train
-w2v_q1 = joblib.load('../data/q1_w2v.pkl')
-w2v_q2 = joblib.load('../data/q2_w2v.pkl')
-
-print (w2v_q1.shape)
-print (w2v_q2.shape)
+# w2v_q1 = joblib.load('../data/q1_w2v.pkl')
+# w2v_q2 = joblib.load('../data/q2_w2v.pkl')
+#
+# print (w2v_q1.shape)
+# print (w2v_q2.shape)
 
 print ("Elapsed time till loading word vectors", time()-start)
 

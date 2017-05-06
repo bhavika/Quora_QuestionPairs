@@ -8,14 +8,27 @@ from string import punctuation
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 import difflib
+import joblib
+from nltk import word_tokenize
+from tqdm import tqdm, tqdm_pandas
+from fuzzywuzzy import fuzz
+from sklearn.externals import joblib
+import pandas as pd
+import gensim
+import numpy as np
+from scipy.stats import skew, kurtosis
+import pyemd
+from time import time
+from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
+from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
+from utilities import utilities as u
 
+wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+norm_model.init_sims(replace=True)
 
-def load_data(path):
-    train = pd.read_csv(path+'/train.csv')
-    test = pd.read_csv(path+'/test.csv')
-    y = train['is_duplicate']
-    return train, test
-
+start = time()
 
 def fill_missing_values(train, test):
     # Check for any null values
@@ -28,7 +41,6 @@ def fill_missing_values(train, test):
     test = test.fillna('empty')
     return train, test
 
-    
 def clean_text(text, remove_stopwords=True, stemming=False):
 
      # Clean the text
@@ -88,13 +100,13 @@ def clean_text(text, remove_stopwords=True, stemming=False):
     text = re.sub(r"banglore", "Banglore", text)
     text = re.sub(r" J K ", " JK ", text)
     
-    # Remove punctuation from text
-    text = ''.join([c for c in text if c not in punctuation])
+    # # Remove punctuation from text
+    # text = ''.join([c for c in text if c not in punctuation])
     
     # Remove stop words
     if remove_stopwords:
         text = text.split()
-        text = [w for w in text if not w in stop_words]
+        text = [w for w in text if not w in u.stop_words]
         text = " ".join(text)
     
     # Shorten words to their stems
@@ -107,27 +119,19 @@ def clean_text(text, remove_stopwords=True, stemming=False):
     # Return a list of words
     return(text)
 
-
-train, test = load_data('../data')
+train, test = u.load_data(u.DATA)
 train, test = fill_missing_values(train, test)
-
 print(train.isnull().sum())
 print(test.isnull().sum())
 
 
-stop_words = ['the','a','an','and','but','if','or','because','as','what','which','this','that','these','those','then',
-              'just','so','than','such','both','through','about','for','is','of','while','during','to','What','Which',
-              'Is','If','While','This']
-
-
 def process_questions(question_list, questions, question_list_name, dataframe):
     '''transform questions and display progress'''
-    for idx, question in enumerate(questions):
+    for question in tqdm(questions):
         question_list.append(clean_text(question, remove_stopwords=True, stemming=True))
-        if len(question_list) % 100000 == 0:
-            progress = len(question_list)/len(dataframe) * 100
-            print("{} is {}% complete.".format(question_list_name, round(progress, 1)))            
-
+        # if len(question_list) % 100000 == 0:
+        #     progress = len(question_list)/len(dataframe) * 100
+        #     print("{} is {}% complete.".format(question_list_name, round(progress, 1)))
 
 train_question2 = []
 process_questions(train_question2, train.question2, 'train_question2', train)
@@ -141,15 +145,15 @@ process_questions(test_question1, test.question1, 'test_question1', test)
 test_question2 = []
 process_questions(test_question2, test.question2, 'test_question2', test)
 
-# append these clean questions back to the original dataframes
+#append these clean questions back to the original dataframes
 
 train_q1_clean = pd.Series(train_question1)
 train_q2_clean = pd.Series(train_question2)
 test_q1_clean = pd.Series(test_question1)
 test_q2_clean = pd.Series(test_question2)
 
-train = pd.concat([train, train_q1_clean, train_q2_clean],  axis = 1)
-test = pd.concat([test, test_q1_clean, test_q2_clean], axis = 1)
+train = pd.concat([train, train_q1_clean, train_q2_clean],  axis=1)
+test = pd.concat([test, test_q1_clean, test_q2_clean], axis=1)
 
 
 # Start feature engineering
@@ -171,8 +175,7 @@ def calculate_wordshare(row):
     return wordshare
 
 
-def create_featureset1(dataframe):
-
+def calculate_featureset1(dataframe):
 
     """
     Input: DataFrame
@@ -205,13 +208,184 @@ def create_featureset1(dataframe):
     dataframe['chars_q2c'] = dataframe[1].map(lambda x: len(x) - x.count(' '))
 
     dataframe['wordshare'] = dataframe.apply(calculate_wordshare, axis=1, raw=True)
-    
+
     return dataframe
 
 
-train = create_featureset1(train)
-test = create_featureset1(test)
+# Calculate fuzzy features
+def calc_qratio(row):
+    # using cleaned questions
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.QRatio(q1, q2)
 
-train.to_pickle('../data/train.pkl')
-test.to_pickle('../data/test.pkl')
 
+def calc_wratio(row):
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.WRatio(q1, q2)
+
+
+def calc_partialratio(row):
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.partial_ratio(q1, q2)
+
+
+def calc_partial_tokenset_ratio(row):
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.partial_token_sort_ratio(q1, q2)
+
+
+def calc_tokensort_ratio(row):
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.token_sort_ratio(q1, q2)
+
+
+def calc_tokenset_ratio(row):
+    q1 = str(row[0]).lower()
+    q2 = str(row[1]).lower()
+    return fuzz.token_set_ratio(q1, q2)
+
+
+def calculate_featureset2(dataframe):
+    dataframe['qratio'] = dataframe.apply(calc_qratio, axis=1, raw=True)
+    dataframe['wratio'] = dataframe.apply(calc_wratio, axis=1, raw=True)
+    dataframe['partial_ratio'] = dataframe.apply(calc_partialratio, axis=1, raw=True)
+    dataframe['partial_tokenset'] = dataframe.apply(calc_partial_tokenset_ratio, axis=1, raw=True)
+    dataframe['tokenset'] = dataframe.apply(calc_tokenset_ratio, axis=1, raw=True)
+    dataframe['partial_tokensort'] = dataframe.apply(calc_tokensort_ratio, axis=1, raw=True)
+    return dataframe
+
+
+def calc_wordmoversdist(s1, s2):
+    s1 = str(s1).lower().split()
+    s2 = str(s2).lower().split()
+    s1 = [w for w in s1 if w not in u.stop_words]
+    s2 = [w for w in s2 if w not in u.stop_words]
+    return wv_model.wmdistance(s1, s2)
+
+
+def calc_norm_wordmover(s1, s2):
+    s1 = str(s1).lower().split()
+    s2 = str(s2).lower().split()
+    s1 = [w for w in s1 if w not in u.stop_words]
+    s2 = [w for w in s2 if w not in u.stop_words]
+    return norm_model.wmdistance(s1, s2)
+
+
+def sent2vec(s):
+    words = str(s).lower()
+    words = word_tokenize(words)
+    words = [w for w in words if not w in u.stop_words]
+    M = []
+    for w in words:
+        try:
+            M.append(wv_model[w])
+        except:
+            continue
+    M = np.array(M)
+    v = M.sum(axis = 0)
+    return v/ np.sqrt((v**2).sum())
+
+
+def calc_question_vectors(data):
+    question1_vectors = np.zeros((data.shape[0], 300))
+    question2_vectors = np.zeros((data.shape[0], 300))
+    for i, q in tqdm(enumerate(data.question1.values)):
+        question1_vectors[i, :] = sent2vec(q)
+    for i, q in tqdm(enumerate(data.question2.values)):
+        question2_vectors[i, :] = sent2vec(q)
+    return question1_vectors, question2_vectors
+
+
+def calculate_featureset3(dataframe):
+    # Word Mover's Distance
+    tqdm_pandas(tqdm())
+    dataframe['wmd'] = dataframe.progress_apply(lambda x: calc_wordmoversdist(x['question1'], x['question2']), axis =1)
+    dataframe['norm_wmd'] = dataframe.progress_apply(lambda x: calc_norm_wordmover(x['question1'], x['question2']), axis =1)
+    return dataframe
+
+
+def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
+    dataframe['cosine_dist'] = [cosine(x, y) for (x, y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['cityblock_dist'] = [cityblock(x,y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['jaccard_dist'] = [jaccard(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['canberra_dist'] =[canberra(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['euclidean_dist'] = [euclidean(x, y ) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['minkowski_dist'] = [minkowski(x, y, 3) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['braycurtis_dist'] = [braycurtis(x, y) for (x,y) in zip(np.nan_to_num(q1_vectors), np.nan_to_num(q2_vectors))]
+    dataframe['skew_q1'] = [skew(x) for x in np.nan_to_num(q1_vectors)]
+    dataframe['skew_q2'] = [skew(x) for x in np.nan_to_num(q2_vectors)]
+    dataframe['kurtosis_q1'] = [kurtosis(x) for x in np.nan_to_num(q1_vectors)]
+    dataframe['kurtosis_q2'] = [kurtosis(x) for x in np.nan_to_num(q2_vectors)]
+    return dataframe
+
+
+def scale(dataframe, features):
+    print ("Before scaling")
+    print (dataframe[features])
+    X = MinMaxScaler().fit_transform(dataframe[features])
+    print ("After scaling")
+    print (dataframe[features])
+
+#
+# print ("Making featureset 1 - Lengths and Wordshare")
+# train = calculate_featureset1(train)
+# test = calculate_featureset1(test)
+#
+# print('Dumping FS-1 pickles for train and test')
+# joblib.dump(train, u.TRAIN_PKL)
+# joblib.dump(test, u.TEST_PKL)
+#
+# print ("Loading pickles for train and test - 1")
+# train = joblib.load(u.TRAIN_PKL)
+# test = joblib.load(u.TEST_PKL)
+#
+# print ("Making featureset 2 - fuzzy")
+# train = calculate_featureset2(train)
+# test = calculate_featureset2(test)
+#
+# print ("Making featureset 3 - WMD")
+# train = calculate_featureset3(train)
+# test = calculate_featureset3(test)
+#
+#
+# print ("Dumping pickles from FS-2 and FS-3")
+# joblib.dump(train, u.TRAIN_PKL)
+# joblib.dump(test, u.TEST_PKL)
+
+train = joblib.load(u.TRAIN_PKL)
+test = joblib.load(u.TEST_PKL)
+print ("Calculating word vectors for train")
+q1, q2 = calc_question_vectors(train)
+
+print ("Saving word vectors for train")
+joblib.dump(q1, u.Q1_VECTORS_TRAIN)
+joblib.dump(q2, u.Q2_VECTORS_TRAIN)
+
+print ("Calculating word vectors for test")
+q1_test, q2_test = calc_question_vectors(test)
+
+print ("Saving word vectors for test")
+joblib.dump(q1_test, u.Q1_VECTORS_TEST)
+joblib.dump(q2_test, u.Q2_VECTORS_TEST)
+
+
+print ("Calculating featureset 4 for train")
+train = calculate_featureset4(train, q1, q2)
+
+print ("Calculating featureset 4 for test")
+test = calculate_featureset4(test, q1_test, q2_test)
+
+
+print ("Dumping train and test pickles after FS-4")
+joblib.dump(train, u.TRAIN_PKL)
+joblib.dump(test, u.TEST_PKL)
+
+print(train.columns.values)
+print(test.columns.values)
+
+print ("Elapsed time", time()-start)

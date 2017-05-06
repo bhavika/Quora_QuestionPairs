@@ -1,27 +1,7 @@
 
 # coding: utf-8
 
-from tqdm import tqdm, tqdm_pandas
-from fuzzywuzzy import fuzz
-from sklearn.externals import joblib
-import pandas as pd
-import gensim
-import numpy as np
-from scipy.stats import skew, kurtosis
-from nltk.corpus import stopwords
-from nltk import word_tokenize
-# import pyemd
-from time import time
-from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
 
-stop_words = stopwords.words('english')
-
-train = pd.read_pickle('../data/train.pkl')
-test = pd.read_pickle('../data/test.pkl')
-
-# wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
-# norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
-# norm_model.init_sims(replace=True)
 
 
 # Calculate fuzzy features
@@ -136,29 +116,21 @@ def calculate_featureset4(dataframe, q1_vectors, q2_vectors):
 
 start = time()
 
-# tr_q1, tr_q2 = calc_question_vectors(train)
-# joblib.dump(tr_q1, '../data/q1_w2v_py2.pkl')
-# joblib.dump(tr_q2, '../data/q2_w2v_py2.pkl')
-
-# train_q1vecs = joblib.load('../data/q1_w2v.pkl')
-# train_q2vecs = joblib.load('../data/q2_w2v.pkl')
-# te_q1, te_q2 = calc_question_vectors(test)
-# joblib.dump(te_q1, '../data/q1_w2v_test_py2.pkl')
-# joblib.dump(te_q2, '../data/q2_w2v_test_py2.pkl')
-
-# test_q1vecs = joblib.load('../data/q1_w2v_test.pkl')
-# test_q2vecs = joblib.load('../data/q2_w2v_test.pkl')
-
-#calculate_featureset4(train, train_q1vecs, train_q2vecs)
-#calculate_featureset4(test, test_q1vecs, test_q2vecs)
+def scale(dataframe, features):
+    print ("Before scaling")
+    print (dataframe[features])
+    X = MinMaxScaler().fit_transform(dataframe[features])
+    print ("After scaling")
+    print (dataframe[features])
 
 
+# scale(train, [])
 
+# def tfidf(q1_series, q2_series):
+# tfidf(train['question1'], train['question2'])
 
-
-
-#train.to_pickle('../data/train.pkl')
-#test.to_pickle('../data/test.pkl')
+train.to_pickle('../data/train.pkl')
+test.to_pickle('../data/test.pkl')
 # print train.columns.values
 
 print ("Elapsed time: ", time() - start)
