@@ -20,7 +20,12 @@ from keras.preprocessing.sequence import pad_sequences
 import joblib
 import gensim
 from time import time
+from utilities import utilities as u
+import re
+from string import punctuation
+from tqdm import tqdm, tqdm_pandas
 
+tqdm.pandas()
 
 start = time()
 
@@ -41,13 +46,21 @@ norm_model.init_sims(replace=True)
 STAMP = 'lstm_%d_%d_%.2f_%.2f'%(num_lstm, num_dense, rate_drop_lstm, \
         rate_drop_dense)
 
-train = joblib.load('../data/train.pkl')
-test = joblib.load('../data/test.pkl')
+train = joblib.load(u.TRAIN_PKL)
+test = joblib.load(u.TEST_PKL)
 
 q1 = train['question1'].tolist()
 q2 = train['question2'].tolist()
+
+print (q1)
+print (q2)
+
 q1_test = test['question1'].tolist()
 q2_test = test['question2'].tolist()
+
+q1_test = q1_test.tolist()
+q2_test = q2_test.tolist()
+
 labels = train['is_duplicate'].tolist()
 ids = test['test_id']
 

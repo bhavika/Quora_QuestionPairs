@@ -8,7 +8,6 @@ from string import punctuation
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 import difflib
-import joblib
 from nltk import word_tokenize
 from tqdm import tqdm, tqdm_pandas
 from fuzzywuzzy import fuzz
@@ -119,10 +118,14 @@ def clean_text(text, remove_stopwords=True, stemming=False):
     # Return a list of words
     return(text)
 
+
 train, test = u.load_data(u.DATA)
+
 train, test = fill_missing_values(train, test)
-print(train.isnull().sum())
-print(test.isnull().sum())
+print (type(train), type(test))
+
+# print(train.isnull().sum())
+# print(test.isnull().sum())
 
 
 def process_questions(question_list, questions, question_list_name, dataframe):
@@ -154,6 +157,8 @@ test_q2_clean = pd.Series(test_question2)
 
 train = pd.concat([train, train_q1_clean, train_q2_clean],  axis=1)
 test = pd.concat([test, test_q1_clean, test_q2_clean], axis=1)
+
+print ("Train is", type(train), "test is ", type(test))
 
 
 # Start feature engineering
@@ -331,48 +336,40 @@ def scale(dataframe, features):
     print ("After scaling")
     print (dataframe[features])
 
-#
-# print ("Making featureset 1 - Lengths and Wordshare")
-# train = calculate_featureset1(train)
-# test = calculate_featureset1(test)
-#
-# print('Dumping FS-1 pickles for train and test')
-# joblib.dump(train, u.TRAIN_PKL)
-# joblib.dump(test, u.TEST_PKL)
-#
-# print ("Loading pickles for train and test - 1")
-# train = joblib.load(u.TRAIN_PKL)
-# test = joblib.load(u.TEST_PKL)
-#
-# print ("Making featureset 2 - fuzzy")
-# train = calculate_featureset2(train)
-# test = calculate_featureset2(test)
-#
-# print ("Making featureset 3 - WMD")
-# train = calculate_featureset3(train)
-# test = calculate_featureset3(test)
-#
-#
-# print ("Dumping pickles from FS-2 and FS-3")
-# joblib.dump(train, u.TRAIN_PKL)
-# joblib.dump(test, u.TEST_PKL)
 
-train = joblib.load(u.TRAIN_PKL)
-test = joblib.load(u.TEST_PKL)
+print ("Making featureset 1 - Lengths and Wordshare")
+train = calculate_featureset1(train)
+test = calculate_featureset1(test)
+
+
+print ("Train is", type(train), "test is ", type(test))
+
+
+print ("Making featureset 2 - fuzzy")
+train = calculate_featureset2(train)
+test = calculate_featureset2(test)
+
+
+print ("Train is", type(train), "test is ", type(test))
+
+print ("Making featureset 3 - WMD")
+train = calculate_featureset3(train)
+test = calculate_featureset3(test)
+
 print ("Calculating word vectors for train")
 q1, q2 = calc_question_vectors(train)
 
 print ("Saving word vectors for train")
-joblib.dump(q1, u.Q1_VECTORS_TRAIN)
-joblib.dump(q2, u.Q2_VECTORS_TRAIN)
+np.save(q1, u.Q1_VECTORS_TRAIN)
+np.save(q2, u.Q2_VECTORS_TRAIN)
+
 
 print ("Calculating word vectors for test")
 q1_test, q2_test = calc_question_vectors(test)
 
 print ("Saving word vectors for test")
-joblib.dump(q1_test, u.Q1_VECTORS_TEST)
-joblib.dump(q2_test, u.Q2_VECTORS_TEST)
-
+np.save(q1_test, u.Q1_VECTORS_TEST)
+np.save(q2_test, u.Q2_VECTORS_TEST)
 
 print ("Calculating featureset 4 for train")
 train = calculate_featureset4(train, q1, q2)
@@ -380,12 +377,17 @@ train = calculate_featureset4(train, q1, q2)
 print ("Calculating featureset 4 for test")
 test = calculate_featureset4(test, q1_test, q2_test)
 
+print ("Train is", type(train), "test is ", type(test))
 
 print ("Dumping train and test pickles after FS-4")
-joblib.dump(train, u.TRAIN_PKL)
-joblib.dump(test, u.TEST_PKL)
+
+train.to_csv(u.TRAIN_PKL, sep=';', header=True)
+test.to_csv(u.TEST_PKL, sep=';', header=True)
 
 print(train.columns.values)
 print(test.columns.values)
+
+print (train)
+print (test)
 
 print ("Elapsed time", time()-start)

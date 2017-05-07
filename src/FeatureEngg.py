@@ -1,7 +1,29 @@
 
 # coding: utf-8
 
+from tqdm import tqdm, tqdm_pandas
+from fuzzywuzzy import fuzz
+from sklearn.externals import joblib
+import pandas as pd
+import gensim
+import numpy as np
+from scipy.stats import skew, kurtosis
+from nltk.corpus import stopwords
+from nltk import word_tokenize
+# import pyemd
+from time import time
+from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
+from sklearn.preprocessing import MinMaxScaler
 
+
+stop_words = stopwords.words('english')
+
+train = pd.read_pickle('../data/train.pkl')
+test = pd.read_pickle('../data/test.pkl')
+
+# wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+# norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
+# norm_model.init_sims(replace=True)
 
 
 # Calculate fuzzy features
