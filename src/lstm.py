@@ -40,9 +40,15 @@ num_dense = np.random.randint(100, 150)
 rate_drop_lstm = 0.15 + np.random.rand() * 0.25
 rate_drop_dense = 0.15 + np.random.rand() * 0.25
 
+act = 'relu'
+
+load_wv = time()
+
 wv_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
 norm_model = gensim.models.KeyedVectors.load_word2vec_format('../GoogleNews-vectors-negative300.bin.gz', binary=True)
 norm_model.init_sims(replace=True)
+
+print ("Time to load model", time() - load_wv)
 
 STAMP = 'lstm_%d_%d_%.2f_%.2f'%(num_lstm, num_dense, rate_drop_lstm, \
         rate_drop_dense)
@@ -50,20 +56,21 @@ STAMP = 'lstm_%d_%d_%.2f_%.2f'%(num_lstm, num_dense, rate_drop_lstm, \
 train = pd.read_csv(u.TRAIN_PKL, sep=';')
 test = pd.read_csv(u.TEST_PKL, sep=';')
 
-q1 = train[0].tolist()
-q2 = train[1].tolist()
+train['0'] = train['0'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
+train['1'] = train['1'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
 
-print (q1)
-print (q2)
+q1 = train['0'].tolist()
+q2 = train['1'].tolist()
 
-q1_test = test[0].tolist()
-q2_test = test[1].tolist()
+test['0'] = test['0'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
+test['1'] = test['1'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
 
-q1_test = q1_test.tolist()
-q2_test = q2_test.tolist()
+
+q1_test = test['0'].tolist()
+q2_test = test['1'].tolist()
 
 labels = train['is_duplicate'].tolist()
-ids = test['test_id']
+ids = test['test_id'].tolist()
 
 re_weight = True #for imbalance
 
@@ -114,7 +121,7 @@ for word, i in word_index.items():
         embedding_matrix[i] = wv_model.word_vec(word)
 print('Null word embeddings: %d' % np.sum(np.sum(embedding_matrix, axis=1) == 0))
 
-np.save('../data/embedding_matrix_lstm.npz', embedding_matrix)
+np.save('../data/embedding_matrix_lstm.npy', embedding_matrix)
 
 print ("Elapsed time till creating embedding matrix", time()-start_wv)
 
