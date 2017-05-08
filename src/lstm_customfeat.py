@@ -32,7 +32,6 @@ start = time()
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
-VALIDATION_SPLIT = 0.1
 
 num_lstm = np.random.randint(175, 275)
 num_dense = np.random.randint(100, 150)
@@ -98,36 +97,21 @@ test_data_1 = pad_sequences(test_sequences_1, maxlen=MAX_SEQUENCE_LENGTH)
 test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
 ids = np.array(ids)
 
-perm = np.random.permutation(len(data_1))
-idx_train = perm[:int(len(data_1)*(1-VALIDATION_SPLIT))]
-idx_val = perm[int(len(data_1)*(1-VALIDATION_SPLIT)):]
-
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
-train_features = np.vstack((other_features_train[idx_train], other_features_train[idx_train]))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
-
-data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
-data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
-val_features = np.vstack((other_features_train[idx_val], other_features_train[idx_val]))
-labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
+data_1_train = np.vstack((data_1, data_2))
+data_2_train = np.vstack((data_2, data_1))
+train_features = np.vstack((other_features_train, other_features_train))
+labels_train = np.concatenate((labels, labels))
 
 nb_words = min(MAX_NB_WORDS, len(word_index))+1
 
-nb_features = 404290
+nb_features = train_features.size
 
 print ("nb_features", nb_features)
 
-# print ("Data 1 train", data_1_train.shape)
-# print ("Data 2 train", data_1_train.shape)
-# print ("Data 1 val", data_1_val.shape)
-# print ("Data 2 val", data_2_val.shape)
-# print (data_1_train)
-
-weight_val = np.ones(len(labels_val))
+weight_val = np.ones(len(labels_train))
 if re_weight:
     weight_val *= 0.472001959
-    weight_val[labels_val==0] = 1.309028344
+    weight_val[labels_train==0] = 1.309028344
 
 start_wv = time()
 
@@ -184,11 +168,9 @@ if re_weight:
 else:
     class_weight = None
 
-
 # Train the model
 
-
-model = Model(inputs=[sequence_1_input, sequence_2_input, other_features], \
+model = Model(inputs=[sequence_1_input, sequence_2_input, other_features],
         outputs=preds)
 model.compile(loss='binary_crossentropy',
         optimizer='nadam',
@@ -200,9 +182,9 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 bst_model_path = STAMP + '.h5'
 model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True)
 
-hist = model.fit([data_1_train, data_2_train, other_features], labels_train, \
-        validation_data=([data_1_val, data_2_val, other_features], labels_val, weight_val), \
-        epochs=200, batch_size=2048, shuffle=True, \
+hist = model.fit([data_1_train, data_2_train, other_features], labels_train,
+        validation_split=0.1,
+        epochs=200, batch_size=2048, shuffle=True,
         class_weight=class_weight, callbacks=[early_stopping, model_checkpoint])
 
 model.load_weights(bst_model_path)
