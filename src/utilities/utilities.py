@@ -20,6 +20,13 @@ Q2_VECTORS_TRAIN = '../data/q2_w2v_train.npy'
 Q1_VECTORS_TEST = '../data/q1_w2v_test.npy'
 Q2_VECTORS_TEST = '../data/q2_w2v_test.npy'
 
+# LSTM Settings
+
+seq_length = 30
+max_nb_words = 200000
+embedding_dim = 300
+re_weight = True
+
 
 def load_data(path):
     train = pd.read_csv(path+'/train.csv')
@@ -30,12 +37,4 @@ def load_data(path):
 
     y = train['is_duplicate']
     return train, test
-
-
-# LSTM Settings
-
-seq_length = 30
-max_nb_words = 200000
-embedding_dim = 300
-re_weight = True
 
