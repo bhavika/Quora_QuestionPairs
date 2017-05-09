@@ -57,11 +57,11 @@ test = pd.read_csv(u.TEST_PKL, sep=';')
 train['0'] = train['0'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
 train['1'] = train['1'].progress_apply(lambda x: re.sub(r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?', "", str(x)))
 
-other_features_train = train[['wordshare', 'wmd', 'norm_wmd', 'cosine_dist', 'euclidean_dist']]
-other_features_test = test[['wordshare', 'wmd', 'norm_wmd', 'cosine_dist', 'euclidean_dist']]
-
-other_features_train = np.array(other_features_train.values.tolist())
-other_features_test = np.array(other_features_test.values.tolist())
+# other_features_train = train[['wordshare', 'wmd', 'norm_wmd', 'cosine_dist', 'euclidean_dist']]
+# other_features_test = test[['wordshare', 'wmd', 'norm_wmd', 'cosine_dist', 'euclidean_dist']]
+#
+# other_features_train = np.array(other_features_train.values.tolist())
+# other_features_test = np.array(other_features_test.values.tolist())
 
 q1 = train['0'].tolist()
 q2 = train['1'].tolist()
@@ -75,7 +75,8 @@ q2_test = test['1'].tolist()
 labels = train['is_duplicate'].tolist()
 ids = test['test_id'].tolist()
 
-re_weight = True #for imbalance
+#for imbalance
+re_weight = True
 
 tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
 tokenizer.fit_on_texts(q1 + q2 + q1_test + q2_test)
@@ -98,36 +99,19 @@ test_data_1 = pad_sequences(test_sequences_1, maxlen=MAX_SEQUENCE_LENGTH)
 test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
 ids = np.array(ids)
 
-perm = np.random.permutation(len(data_1))
-idx_train = perm[:int(len(data_1)*(1-VALIDATION_SPLIT))]
-idx_val = perm[int(len(data_1)*(1-VALIDATION_SPLIT)):]
-
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
-train_features = np.vstack((other_features_train[idx_train], other_features_train[idx_train]))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
-
-data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
-data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
-val_features = np.vstack((other_features_train[idx_val], other_features_train[idx_val]))
-labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
+# If Q2 is a duplicate of Q1, Q1 is also a duplicate of Q2.
+# We feed this into the LSTM by stacking the two combinations
+data_1_train = np.vstack((data_1, data_2))
+data_2_train = np.vstack((data_2, data_1))
+labels_train = np.concatenate((labels, labels))
 
 nb_words = min(MAX_NB_WORDS, len(word_index))+1
 
-nb_features = 404290
 
-print ("nb_features", nb_features)
-
-# print ("Data 1 train", data_1_train.shape)
-# print ("Data 2 train", data_1_train.shape)
-# print ("Data 1 val", data_1_val.shape)
-# print ("Data 2 val", data_2_val.shape)
-# print (data_1_train)
-
-weight_val = np.ones(len(labels_val))
+weight_val = np.ones(len(labels_train))
 if re_weight:
     weight_val *= 0.472001959
-    weight_val[labels_val==0] = 1.309028344
+    weight_val[labels_train==0] = 1.309028344
 
 start_wv = time()
 
@@ -164,17 +148,16 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-other_features = Input(shape=(nb_features, ))
 
-merged = concatenate([x1, y1, other_features])
-merged = Dropout(rate_drop_dense)(merged)
-merged = BatchNormalization()(merged)
+m = concatenate([x1, y1])
+m = Dropout(rate_drop_dense)(m)
+m = BatchNormalization()(m)
 
-merged = Dense(num_dense, activation=act)(merged)
-merged = Dropout(rate_drop_dense)(merged)
-merged = BatchNormalization()(merged)
+m = Dense(num_dense, activation=act)(m)
+m = Dropout(rate_drop_dense)(m)
+m = BatchNormalization()(m)
 
-preds = Dense(1, activation='sigmoid')(merged)
+preds = Dense(1, activation='sigmoid')(m)
 
 
 # Add class weights
@@ -188,21 +171,21 @@ else:
 # Train the model
 
 
-model = Model(inputs=[sequence_1_input, sequence_2_input, other_features], \
+model = Model(inputs=[sequence_1_input, sequence_2_input], \
         outputs=preds)
 model.compile(loss='binary_crossentropy',
         optimizer='nadam',
         metrics=['acc'])
-#model.summary()
+
 print(STAMP)
 
 early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 bst_model_path = STAMP + '.h5'
 model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True)
 
-hist = model.fit([data_1_train, data_2_train, other_features], labels_train, \
-        validation_data=([data_1_val, data_2_val, other_features], labels_val, weight_val), \
-        epochs=200, batch_size=2048, shuffle=True, \
+hist = model.fit([data_1_train, data_2_train], labels_train,
+        validation_split=0.1,
+        epochs=200, batch_size=2048, shuffle=True,
         class_weight=class_weight, callbacks=[early_stopping, model_checkpoint])
 
 model.load_weights(bst_model_path)

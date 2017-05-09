@@ -17,7 +17,6 @@ featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'cha
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 
 features = featureset1 + featureset2
-# features = ['wordshare']
 print (features)
 
 X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)

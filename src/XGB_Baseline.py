@@ -11,16 +11,23 @@ from sklearn.model_selection import GridSearchCV
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-train = pd.read_pickle('../data/train.pkl')
-test = pd.read_pickle('../data/test.pkl')
+# train = pd.read_pickle('../data/train.pkl')
+# test = pd.read_pickle('../data/test.pkl')
+
+train = pd.read_csv('../data/train_f.csv', sep = ';')
+test = pd.read_csv('../data/test_f.csv', sep = ';')
+
 
 featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'chars_q2c', 'wordshare']
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 featureset3 = [ 'norm_wmd', 'wmd']
+featureset4 = ['cosine_dist', 'cityblock_dist', 'jaccard_dist', 'canberra_dist',
+ 'euclidean_dist', 'minkowski_dist', 'braycurtis_dist', 'skew_q1', 'skew_q2',
+ 'kurtosis_q1', 'kurtosis_q2']
 
 #features = featureset1 + featureset2 + featureset3
-features = ['wordshare'] + featureset3
-print (features)
+features = featureset1 + featureset2 + featureset3 + featureset4
+print(features)
 
 X_train, X_test, y_train, y_test = train_test_split(train[features], train['is_duplicate'], test_size=0.2)
 
@@ -58,7 +65,7 @@ plt.show()
 sub = pd.DataFrame()
 sub['test_id'] = test['test_id']
 sub['is_duplicate'] = y_pred
-sub.to_csv('../sub/xgb_baseline6.csv', index=False)
+sub.to_csv('../sub/xgb_baseline8.csv', index=False)
 
 
 subprocess.call(['speech-dispatcher'])        #start speech dispatcher
