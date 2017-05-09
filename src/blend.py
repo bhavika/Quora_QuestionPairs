@@ -36,11 +36,11 @@ def blend(X, y, test):
 
     print (skf_splits)
 
-    clfs = [RandomForestRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
-            RandomForestRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
-            ExtraTreesRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
-            ExtraTreesRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
-            GradientBoostingRegressor(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=200)]
+    clfs = [RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
+            GradientBoostingRegressor(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=50)]
 
     print ("Creating train and test sets for blending")
     dataset_blend_train = np.zeros((X.shape[0], len(clfs)))
