@@ -7,15 +7,20 @@ from sklearn.linear_model import LogisticRegression
 from numpy import inf, where
 from time import time
 
-train = pd.read_pickle('../data/train.pkl')
-test = pd.read_pickle('../data/test.pkl')
+train = pd.read_csv('../data/train_f.csv', sep = ';')
+test = pd.read_csv('../data/test_f.csv', sep = ';')
+
 
 featureset1 = ['len_q1c', 'len_q2c', 'words_q1c', 'words_q2c', 'chars_q1c', 'chars_q2c', 'wordshare']
 featureset2 = ['qratio', 'wratio', 'partial_ratio', 'partial_tokenset', 'tokenset', 'partial_tokensort']
 featureset3 = [ 'norm_wmd', 'wmd']
+featureset4 = ['cosine_dist', 'cityblock_dist', 'jaccard_dist', 'canberra_dist',
+ 'euclidean_dist', 'minkowski_dist', 'braycurtis_dist', 'skew_q1', 'skew_q2',
+ 'kurtosis_q1', 'kurtosis_q2']
 
-features = featureset3 + ['wordshare']
-
+#features = featureset1 + featureset2 + featureset3
+features = featureset1 + featureset2 + featureset3 + featureset4
+print(features)
 
 def blend(X, y, test):
     np.random.seed(7)
@@ -27,15 +32,15 @@ def blend(X, y, test):
     skf = StratifiedKFold(n_folds)
     skf_splits = skf.split(X, y)
 
-    private = pd.read_pickle('../data/test.pkl')
+    private = pd.read_csv('../data/test_f.csv', sep=';')
 
     print (skf_splits)
 
-    clfs = [RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
-            RandomForestRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
-            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
-            ExtraTreesRegressor(n_estimators=100, n_jobs=-1, criterion='mse'),
-            GradientBoostingRegressor(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=50)]
+    clfs = [RandomForestRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
+            RandomForestRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
+            ExtraTreesRegressor(n_estimators=200, n_jobs=-1, criterion='mse'),
+            GradientBoostingRegressor(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=200)]
 
     print ("Creating train and test sets for blending")
     dataset_blend_train = np.zeros((X.shape[0], len(clfs)))
@@ -83,15 +88,11 @@ def blend(X, y, test):
     # sub['is_duplicate'] = y_submission
     # sub.to_csv('../sub/blended1.csv', index=False)
 
-    np.savetxt(fname='../sub/blend_4.txt', X=y_submission, fmt="%d,%0.9f", header='test_id,is_duplicate',comments='')
+    np.savetxt(fname='../sub/blend_5.txt', X=y_submission, fmt="%d,%0.9f", header='test_id,is_duplicate',comments='')
 
 y_train = np.array(train['is_duplicate'])
 X_train = np.array(train[features])
 X_test = np.array(test[features])
-
-# print np.all(np.isfinite(X_train))
-# print np.all(np.isfinite(X_test))
-# print np.all(np.isfinite(y_train))
 
 X_train[where(np.isinf(X_train))] = 0
 X_test[where(np.isinf(X_test))] = 0

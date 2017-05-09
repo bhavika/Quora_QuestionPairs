@@ -4,8 +4,8 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-train = pd.read_pickle('../data/train.pkl')
-test = pd.read_pickle('../data/test.pkl')
+train = pd.read_csv('../data/train_f.csv', sep = ';')
+test = pd.read_csv('../data/test_f.csv', sep = ';')
 
 # print train.columns.values
 # print train[['wmd', 'norm_wmd']]
@@ -36,7 +36,7 @@ n = 10000
 #            fit_reg=False,
 #            hue='is_duplicate')
 
-sns.violinplot(x='is_duplicate', y='wordshare', data=train[0:2000])
+sns.violinplot(x='is_duplicate', y='wordshare', data=train[0:10000])
 
 plt.show()
 
