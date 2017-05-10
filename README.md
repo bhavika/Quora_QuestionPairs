@@ -1,8 +1,8 @@
 ### Quora Question Pairs
 
-[Kaggle Competition] (https://www.kaggle.com/c/quora-question-pairs)
+[Kaggle Competition](https://www.kaggle.com/c/quora-question-pairs)
 
-## Setup:
+## Setup
 
 1) Unzip Project_btekwani.zip
 2) cd/Project_btekwani
@@ -15,7 +15,7 @@
 `sudo python -m nltk.downloader -d /usr/local/share/nltk_data all`
 
 
-## Files:
+## Files
 
 1) The `src` folder contains all the files used to generate visualizations, statistics, models and features used throughout the report.
 2) `blend.py` is the blended model made of 6 regressors.
@@ -31,19 +31,20 @@ LSTM settings (constant values).
 9) `Visualizations.py` - generates violin plots and bar plots used in the report. Probably will not run as it is.
 
 
-## Directory structure:
+## Directory structure
 
-Project_btekwani:
+Project_btekwani
+
     - data
-        - train.csv
-        - sample_submission.csv
-        - test.csv
+        + train.csv
+        + sample_submission.csv
+        + test.csv
     - report
     - src
-        -utilities
-            - __init__.py
-            - utilities.py
-        - other *.py files
+        +utilities
+            + __init__.py
+            + utilities.py
+        + other *.py files
     - sub
         [generated submission files go here]
     - viz
@@ -51,9 +52,25 @@ Project_btekwani:
     GoogleNews-vectors-negative300.bin.gz
 
 
-Output:
-
+## Output
 1) `xgb_gridsearch.out` - contains the GridSearch logs
 2) `sub/XGB_Baseline_logs.txt` - contains XGB outputs for various features
 3) `lstm_274_118_0.20_0.37.h5` - the weights for the LSTM, will require an hd5 library in Python to open and view.
-4) All submitted files are in the `sub` folder.
+4) All submitted prediction files are in the `sub` folder.
+
+
+## Data
+
+1. Download the original CSV files and feature files [here](https://drive.google.com/drive/folders/0B44mATPcQlDLbEtxbnpraGtmdjg?usp=sharing).
+2. Download Google's pretrained Word2Vec model using
+    `wget https://s3.amazonaws.com/dl4j-distribution/GoogleNews-vectors-negative300.bin.gz`
+3. mkdir `sub` inside the project folder so that all the submission files can be written there. 
+
+## Run the source
+
+1. Run `features.py` once you have atleast the train.csv and test.csv files in the `data` folder. train_f.csv and test_f.csv will be overwritten if they stored in `data` already. 
+2. Run `XGB_Baseline.py` for the baseline model.
+3. Run `XGBoost_GridSearch.py` to perform a scikit-learn style GridSearch over the XGBoost parameters.
+4. Run `blend.py` followed by `makesub.py` to generate a submission file (only for the blend model).
+5. Run `lstm.py`. This will only run if you have keras and tensorflow installed. 
+
